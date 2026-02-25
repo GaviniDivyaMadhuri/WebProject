@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer's Friend (Voice Enabled)</title>
+    <!-- 1. Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 2. Load Google's Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Set the Inter font as the default */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f4f4;
+        }
+        /* Custom styles for the chat bubbles */
+        .chat-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+        .user-bubble {
+            background-color: #2563eb;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-bubble {
+            background-color: #ffffff;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .topic-button {
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            color: #374151;
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: background-color 0.15s, border-color 0.15s;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .topic-button:hover {
+            background-color: #e5e7eb;
+        }
+        .speak-button {
+            margin-left: 8px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .speak-button:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="bg-green-50">
+    <div class="container mx-auto max-w-lg p-4 min-h-screen flex flex-col">
+        
+        <!-- Header -->
+        <header class="text-center py-6">
+            <h1 class="text-4xl font-bold text-green-800">🧑‍🌾 Farmer's Friend</h1>
+            <p class="text-lg text-green-700 mt-2">Voice & Image AI Assistant</p>
+        </header>
+
+        <!-- Main Content (Tabbed Interface) -->
+        <div class="flex-grow flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden">
+            
+            <!-- Tab Buttons -->
+            <div class="flex border-b">
+                <button id="tab-ask" class="flex-1 p-4 font-semibold text-lg text-green-700 border-b-4 border-green-700" onclick="showTab('ask')">
+                    🎤 Ask Expert
+                </button>
+                <button id="tab-crop" class="flex-1 p-4 font-semibold text-lg text-gray-500" onclick="showTab('crop')">
+                    📸 Crop Doctor
+                </button>
+            </div>
+
+            <!-- === Tab 1: Ask an Expert (Gemini AI Chat) === -->
+            <div id="content-ask" class="flex flex-col flex-grow p-4 space-y-4">
+                
+                <!-- Location Input for Persistent Context -->
+                <div class="mb-2 p-3 bg-yellow-50 rounded-lg border border-yellow-300 shadow-md">
+                    <label for="farmer-location" class="block text-base font-bold text-yellow-800 flex items-center mb-1">
+                        📍 Your Local Area (Saved Context):
+                    </label>
+                    <input type="text" id="farmer-location" class="w-full border-gray-300 border rounded-lg py-2 px-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="e.g., Namburu, Guntur, Andhra Pradesh">
+                    <p class="text-xs text-yellow-700 mt-1">This helps get local weather and crop price information.</p>
+                </div>
+                
+                <!-- Language Selection using Radio Buttons -->
+                <div class="mb-2 p-3 bg-indigo-50 rounded-lg border border-indigo-300 shadow-md">
+                    <label class="block text-base font-bold text-indigo-800 flex items-center mb-2">
+                        🗣️ Response Language Selection:
+                    </label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- Option 1: English (Default) -->
+                        <label class="flex items-center space-x-2 text-gray-700 cursor-pointer p-2 bg-white rounded-lg border border-gray-300 hover:bg-gray-100 transition">
+                            <input type="radio" name="response-language" value="en-US" class="h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500" checked>
+                            <span class="font-medium">English (en-US)</span>
+                        </label>
+                        <!-- Option 2: Hindi -->
+                        <label class="flex items-center space-x-2 text-gray-700 cursor-pointer p-2 bg-white rounded-lg border border-gray-300 hover:bg-gray-100 transition">
+                            <input type="radio" name="response-language" value="hi-IN" class="h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500">
+                            <span class="font-medium">Hindi (hi-IN)</span>
+                        </label>
+                        <!-- Option 3: Telugu -->
+                        <label class="flex items-center space-x-2 text-gray-700 cursor-pointer p-2 bg-white rounded-lg border border-gray-300 hover:bg-gray-100 transition">
+                            <input type="radio" name="response-language" value="te-IN" class="h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500">
+                            <span class="font-medium">Telugu (te-IN)</span>
+                        </label>
+                        <!-- Option 4: Marathi -->
+                        <label class="flex items-center space-x-2 text-gray-700 cursor-pointer p-2 bg-white rounded-lg border border-gray-300 hover:bg-gray-100 transition">
+                            <input type="radio" name="response-language" value="mr-IN" class="h-4 w-4 text-green-600 border-gray-300 focus:ring-green-500">
+                            <span class="font-medium">Marathi (mr-IN)</span>
+                        </label>
+                    </div>
+                    <p class="text-xs text-indigo-700 mt-2">Select the language you want the AI to speak and respond in.</p>
+                </div>
+                
+                <!-- Chat History -->
+                <div id="chat-history" class="flex-grow overflow-y-auto p-4 space-y-4 flex flex-col min-h-[300px] border rounded-lg bg-gray-50 shadow-inner">
+                    <!-- Initial welcome message -->
+                    <div class="chat-bubble ai-bubble flex items-center">
+                        <span>Hello! Ask or speak your question. Tap the speaker icon 🔊 to hear the answer.</span>
+                        <button class="speak-button text-blue-500" onclick="speakText('Hello! Ask or speak your question. Tap the speaker icon to hear the answer.')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4H9V6h2v8zm-2-9a1 1 0 100 2h2a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                    <!-- Chat messages will be added here by JavaScript -->
+                </div>
+
+                <!-- Quick Topics -->
+                <div class="flex overflow-x-auto space-x-2 p-2">
+                    <!-- Query changed to just the topic, letting the form handler append the location -->
+                    <button class="topic-button" onclick="setQuery('Today\'s weather forecast')">☀️ Weather</button> 
+                    <button class="topic-button" onclick="setPriceQuery()">📈 Crop Prices</button> 
+                    <button class="topic-button" onclick="setQuery('How to control aphids?')">🐞 Pest Control</button>
+                    <button class="topic-button" onclick="setQuery('New government scheme for farmers')">🏛️ Govt. Schemes</button>
+                </div>
+
+                <!-- Input Form: Now includes Voice Preference Toggle -->
+                <form id="chat-form" class="flex flex-col border-t pt-4">
+                    <!-- Voice Preference Toggle -->
+                    <div class="flex items-center justify-end mb-2">
+                        <label for="prefer-voice-output" class="text-sm font-medium text-gray-700 mr-2 cursor-pointer">
+                            🔊 Speak Answer Automatically
+                        </label>
+                        <input type="checkbox" id="prefer-voice-output" class="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500" checked>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="user-query" class="flex-grow border rounded-full py-3 px-5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="Type or tap mic to speak...">
+                        
+                        <!-- Microphone Button (STT) -->
+                        <button type="button" id="mic-button" class="bg-red-500 text-white rounded-full p-3 shadow-xl hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-300 transition duration-150">
+                            <svg id="mic-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7v0a7 7 0 01-7-7v0M12 18V21M7 21h10"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 9H9a3 3 0 01-3-3V5a3 3 0 013-3h6a3 3 0 013 3v1a3 3 0 01-3 3z"/>
+                            </svg>
+                            <svg id="mic-listening-icon" class="h-6 w-6 hidden animate-pulse" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 17c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v9c0 1.66 1.34 3 3 3zm-3.5-6h-1c0 3.03 2.47 5.5 5.5 5.5s5.5-2.47 5.5-5.5h-1c0 2.39-1.93 4.5-4.5 4.5s-4.5-2.11-4.5-4.5zM12 21c-2.31 0-4.34-1.68-4.75-4h9.5c-.41 2.32-2.44 4-4.75 4z"/>
+                            </svg>
+                        </button>
+
+                        <!-- Send Button (Text) -->
+                        <button type="submit" class="bg-green-700 text-white rounded-full p-3 shadow-xl hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- === Tab 2: Crop Doctor (Image Upload) === -->
+            <div id="content-crop" class="hidden flex-col p-6 space-y-6">
+                <p class="text-center text-gray-600 font-medium">Upload a photo of your sick plant or leaf. The AI will analyze it and provide a voice solution.</p>
+                
+                <!-- File Upload -->
+                <div class="flex flex-col items-center">
+                    <label for="crop-image-upload" class="cursor-pointer bg-blue-100 text-blue-800 font-semibold p-6 rounded-xl text-center border-4 border-dashed border-blue-400 hover:bg-blue-200 transition duration-150 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Click to Upload Plant Photo
+                    </label>
+                    <input type="file" id="crop-image-upload" class="hidden" accept="image/*">
+                    <span id="file-name" class="text-gray-600 mt-2 font-medium">No file selected</span>
+                </div>
+
+                <!-- Analysis Result Area -->
+                <div id="analysis-result" class="hidden p-4 bg-white rounded-lg border border-gray-200 shadow-xl">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 border-b pb-2">Analysis Result</h3>
+                    
+                    <!-- Loading State -->
+                    <div id="loading-spinner" class="flex items-center space-x-3 justify-center py-4">
+                        <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-gray-600 font-medium">Analyzing your photo... Please wait.</span>
+                    </div>
+
+                    <!-- Result Content -->
+                    <div id="result-content" class="hidden flex items-start space-x-4">
+                        <p id="result-text" class="text-gray-700 flex-grow leading-relaxed"></p>
+                        <button id="speak-analysis-button" class="speak-button text-blue-500 ml-4 p-2 flex-shrink-0" onclick="speakAnalysisResult()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4H9V6h2v8zm-2-9a1 1 0 100 2h2a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End main content -->
+
+    </div> <!-- End container -->
+
+    <script>
+        // Define the API key variable as an empty string. 
+        // This is the **correct and secure default** for the immersive environment.
+        const apiKey = "AIzaSyCkWnf0HITjeJrj72goqZs9u-AVqBpuhaE"; 
+
+        // Global state for AudioContext (required for TTS playback)
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // === Utility Functions ===
+        function getLanguageCode() {
+            // Find the checked radio button in the 'response-language' group
+            const checkedRadio = document.querySelector('input[name="response-language"]:checked');
+            // Default to en-US if nothing is checked (shouldn't happen with 'checked' attribute)
+            return checkedRadio ? checkedRadio.value : 'en-US';
+        }
+
+        /** Returns the globally defined API key variable. */
+        function getApiKey() {
+            return apiKey;
+        }
+
+        // === Tab Switching Logic ===
+        const tabAsk = document.getElementById('tab-ask');
+        const tabCrop = document.getElementById('tab-crop');
+        const contentAsk = document.getElementById('content-ask');
+        const contentCrop = document.getElementById('content-crop');
+
+        function showTab(tabName) {
+            const tabs = { 'ask': tabAsk, 'crop': tabCrop };
+            const contents = { 'ask': contentAsk, 'crop': contentCrop };
+
+            for (const key in tabs) {
+                if (key === tabName) {
+                    tabs[key].classList.add('text-green-700', 'border-green-700');
+                    tabs[key].classList.remove('text-gray-500');
+                    contents[key].classList.remove('hidden');
+                    contents[key].classList.add('flex');
+                } else {
+                    tabs[key].classList.remove('text-green-700', 'border-green-700');
+                    tabs[key].classList.add('text-gray-500');
+                    contents[key].classList.add('hidden');
+                    contents[key].classList.remove('flex');
+                }
+            }
+        }
+        showTab('ask'); // Initialize to the 'Ask Expert' tab
+
+        // === Text-to-Speech (TTS) Logic ===
+        
+        const SAMPLE_RATE = 24000; // Gemini TTS API returns 24000Hz PCM audio
+
+        /** Converts Base64 audio string to an ArrayBuffer. */
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        /** Converts signed 16-bit PCM to a WAV Blob. */
+        function pcmToWav(pcm16, sampleRate) {
+            const numChannels = 1;
+            const bitDepth = 16;
+            const numSamples = pcm16.length;
+            
+            const buffer = new ArrayBuffer(44 + numSamples * 2);
+            const view = new DataView(buffer);
+            
+            // RIFF chunk descriptor
+            writeString(view, 0, 'RIFF'); // ChunkID
+            view.setUint32(4, 36 + numSamples * 2, true); // ChunkSize
+            writeString(view, 8, 'WAVE'); // Format
+            
+            // FMT sub-chunk
+            writeString(view, 12, 'fmt '); // Subchunk1ID
+            view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
+            view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
+            view.setUint16(22, numChannels, true); // NumChannels
+            view.setUint32(24, sampleRate, true); // SampleRate
+            view.setUint32(28, sampleRate * numChannels * bitDepth / 8, true); // ByteRate
+            view.setUint16(32, numChannels * bitDepth / 8, true); // BlockAlign
+            view.setUint16(34, bitDepth, true); // BitsPerSample
+            
+            // Data sub-chunk
+            writeString(view, 36, 'data'); // Subchunk2ID
+            view.setUint32(40, numSamples * 2, true); // Subchunk2Size
+            
+            // Write PCM data
+            let offset = 44;
+            for (let i = 0; i < numSamples; i++) {
+                view.setInt16(offset, pcm16[i], true);
+                offset += 2;
+            }
+            
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+        
+        /** Plays a text string using the Gemini TTS API. */
+        async function speakText(textToSpeak) {
+            // Find the button that triggered the event, or the first available one if triggered programmatically
+            const tempButton = event?.currentTarget || document.querySelector('.speak-button:not([disabled])'); 
+
+            if (!tempButton) return;
+
+            // Check if another audio process is active by looking for a disabled speaker button
+            if (document.querySelector('.speak-button[disabled]')) {
+                console.log("Audio already playing or generating.");
+                return;
+            }
+            
+            try {
+                tempButton.disabled = true;
+                const originalHtml = tempButton.innerHTML; 
+                tempButton.innerHTML = `<svg class="animate-spin h-5 w-5 text-green-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
+                const audioData = await callGeminiTTSApi(textToSpeak);
+
+                const pcmData = base64ToArrayBuffer(audioData);
+                const pcm16 = new Int16Array(pcmData);
+                const wavBlob = pcmToWav(pcm16, SAMPLE_RATE);
+                
+                const audioUrl = URL.createObjectURL(wavBlob);
+                const audio = new Audio(audioUrl);
+                
+                audio.play();
+
+                audio.onended = () => {
+                    tempButton.disabled = false;
+                    tempButton.innerHTML = originalHtml;
+                    URL.revokeObjectURL(audioUrl);
+                };
+
+            } catch (error) {
+                console.error("Error playing audio:", error);
+                tempButton.disabled = false;
+                tempButton.innerHTML = originalHtml;
+            }
+        }
+
+        async function callGeminiTTSApi(text, retries = 3, delay = 1000) {
+            const currentApiKey = getApiKey();
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${currentApiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: text }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: "Puck" }
+                        }
+                    }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`TTS HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const audioData = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+                    
+                    if (audioData) {
+                        return audioData;
+                    } else {
+                        throw new Error("Invalid TTS response structure or missing audio data.");
+                    }
+                } catch (error) {
+                    if (i === retries - 1) { throw error; }
+                    await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                }
+            }
+            throw new Error("TTS API call failed after all retries.");
+        }
+
+
+        // === Speech-to-Text (STT) Logic ===
+        const micButton = document.getElementById('mic-button');
+        const userQueryInput = document.getElementById('user-query');
+        const micIcon = document.getElementById('mic-icon');
+        const micListeningIcon = document.getElementById('mic-listening-icon');
+        const chatForm = document.getElementById('chat-form');
+        let recognition = null;
+
+        // Check for browser support
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            // Language is set when recognition starts via startSpeechToText()
+            
+            micButton.addEventListener('click', startSpeechToText);
+
+            recognition.onstart = () => {
+                micIcon.classList.add('hidden');
+                micListeningIcon.classList.remove('hidden');
+                userQueryInput.placeholder = "Listening... Speak now.";
+                micButton.classList.add('bg-red-700', 'animate-pulse');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                userQueryInput.value = transcript;
+                
+                // Automatically submit the query after voice recognition ends
+                chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+            };
+
+            recognition.onend = () => {
+                micIcon.classList.remove('hidden');
+                micListeningIcon.classList.add('hidden');
+                userQueryInput.placeholder = "Type or tap mic to speak...";
+                micButton.classList.remove('bg-red-700', 'animate-pulse');
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                userQueryInput.placeholder = `Error: ${event.error}`;
+                recognition.onend();
+            };
+        } else {
+            micButton.disabled = true;
+            micButton.title = "Voice input not supported in this browser.";
+            micButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        function startSpeechToText() {
+            if (recognition) {
+                // Update language setting before starting
+                recognition.lang = getLanguageCode();
+                recognition.start();
+            }
+        }
+
+
+        // === Chat and Crop Doctor Logic Integration ===
+        
+        function setPriceQuery() {
+            const farmerLocation = document.getElementById('farmer-location').value.trim();
+            if (!farmerLocation) {
+                // Visual feedback if location is missing
+                const locationInput = document.getElementById('farmer-location');
+                locationInput.placeholder = "🛑 PLEASE ENTER YOUR AREA HERE FIRST!";
+                locationInput.focus();
+                locationInput.classList.add('ring-4', 'ring-red-500', 'ring-opacity-50');
+                setTimeout(() => {
+                    locationInput.classList.remove('ring-4', 'ring-red-500', 'ring-opacity-50');
+                    locationInput.placeholder = "e.g., Namburu, Guntur, Andhra Pradesh";
+                }, 3000);
+                return;
+            }
+            
+            const query = `Latest market price for common crops (like rice, wheat, and vegetables)`;
+            userQueryInput.value = query;
+            chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        }
+
+        function setQuery(query) {
+            userQueryInput.value = query;
+            chatForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        }
+
+        // --- Chat Form Submission ---
+        const chatHistory = document.getElementById('chat-history');
+        
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = userQueryInput.value.trim();
+            const farmerLocation = document.getElementById('farmer-location').value.trim();
+            const languageCode = getLanguageCode();
+
+            if (!query) return;
+            
+            addMessageToChat(query, 'user');
+            userQueryInput.value = '';
+
+            const loadingBubble = addMessageToChat('...', 'ai', true);
+
+            try {
+                const aiResponse = await callGeminiApi(query, farmerLocation, languageCode);
+                
+                loadingBubble.innerHTML = aiResponse.text; 
+                
+                // Add sources if available
+                if (aiResponse.sources && aiResponse.sources.length > 0) {
+                    const sourcesHtml = aiResponse.sources.map(source => 
+                        `<a href="${source.uri}" target="_blank" class="block text-xs text-blue-600 underline truncate hover:text-blue-800" title="${source.title}">${source.title}</a>`
+                    ).join('');
+                    loadingBubble.innerHTML += `<div class="mt-2 pt-2 border-t border-gray-200"><strong class="text-xs font-semibold">Sources:</strong>${sourcesHtml}</div>`;
+                }
+
+                // Add TTS button and trigger speech if preferred
+                const textToSpeak = aiResponse.text.replace(/<br>/g, ' ').replace(/<[^>]*>/g, ''); // Clean HTML tags for speech
+                addSpeakButtonToMessage(loadingBubble, textToSpeak);
+
+                const preferVoiceOutput = document.getElementById('prefer-voice-output');
+                if (preferVoiceOutput.checked) {
+                    const speakBtn = loadingBubble.querySelector('.speak-button');
+                    if (speakBtn) {
+                        speakBtn.dispatchEvent(new Event('click', { bubbles: true }));
+                    }
+                }
+
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                // Update error message
+                let errorMessage = "Sorry, I couldn't get an answer. Please check your network connection.";
+                if (error.message.includes('401')) {
+                    errorMessage = "❌ **ERROR:** Authentication failed. The environment may not be providing the necessary token. Try refreshing the page.";
+                }
+                loadingBubble.innerHTML = errorMessage;
+                loadingBubble.classList.remove('bg-white', 'border', 'border-gray-200');
+                loadingBubble.classList.add('bg-red-100', 'border-red-300', 'text-red-800');
+            }
+        });
+
+        function addMessageToChat(message, sender, isLoading = false) {
+            const bubble = document.createElement('div');
+            bubble.classList.add('chat-bubble', sender === 'user' ? 'user-bubble' : 'ai-bubble');
+            bubble.innerHTML = message;
+            
+            chatHistory.appendChild(bubble);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            return bubble;
+        }
+
+        function addSpeakButtonToMessage(bubbleElement, text) {
+             const cleanedText = text.replace(/<br>/g, ' ').replace(/<[^>]*>/g, '');
+             const button = document.createElement('button');
+             button.classList.add('speak-button', 'text-blue-500', 'ml-2', 'p-0.5');
+             button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4H9V6h2v8zm-2-9a1 1 0 100 2h2a1 1 0 100-2H9z" clip-rule="evenodd" /></svg>`;
+             
+             // Extract current content to wrap it
+             const textContent = bubbleElement.innerHTML;
+             bubbleElement.innerHTML = '';
+             
+             const textSpan = document.createElement('span');
+             textSpan.classList.add('flex-grow', 'leading-relaxed');
+             textSpan.innerHTML = textContent;
+             
+             bubbleElement.classList.add('flex', 'items-start');
+             
+             // Attach the TTS function to the button
+             button.onclick = (e) => speakText(cleanedText);
+             
+             bubbleElement.appendChild(textSpan);
+             bubbleElement.appendChild(button);
+        }
+
+        // --- Crop Doctor Logic ---
+        const imageUpload = document.getElementById('crop-image-upload');
+        const fileName = document.getElementById('file-name');
+        const analysisResult = document.getElementById('analysis-result');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const resultContent = document.getElementById('result-content');
+        const resultTextP = document.getElementById('result-text');
+        const speakAnalysisBtn = document.getElementById('speak-analysis-button');
+
+        function speakAnalysisResult() {
+            const text = resultTextP.innerText;
+            speakText(text);
+        }
+
+        imageUpload.addEventListener('change', async () => {
+            if (imageUpload.files.length > 0) {
+                const file = imageUpload.files[0];
+                fileName.textContent = file.name;
+
+                // Show loading state
+                analysisResult.classList.remove('hidden');
+                loadingSpinner.classList.remove('hidden');
+                resultContent.classList.add('hidden');
+                resultTextP.innerHTML = '';
+                resultTextP.classList.remove('text-red-600', 'font-bold');
+                speakAnalysisBtn.classList.add('hidden');
+                speakAnalysisBtn.disabled = false;
+                
+                try {
+                    const { base64Data, mimeType } = await fileToBase64(file);
+                    const aiResponse = await callGeminiVisionApi(base64Data, mimeType, getLanguageCode());
+                    
+                    // Display the result
+                    resultTextP.innerHTML = aiResponse.text;
+                    
+                    if (aiResponse.text.includes("This photo does not look like a plant")) {
+                        resultTextP.classList.add('text-red-600', 'font-bold');
+                    }
+                    
+                    speakAnalysisBtn.classList.remove('hidden');
+                    
+                    const textToSpeak = resultTextP.innerText;
+                    speakAnalysisBtn.onclick = (e) => speakText(textToSpeak);
+                    
+                    const preferVoiceOutput = document.getElementById('prefer-voice-output');
+                    if (preferVoiceOutput.checked) {
+                        speakAnalysisBtn.dispatchEvent(new Event('click', { bubbles: true }));
+                    }
+
+                } catch (error) {
+                    console.error("Error analyzing image:", error);
+                    let errorMessage = "Sorry, I couldn't analyze the photo. Please try again. (Check console for network issues)";
+                    resultTextP.innerHTML = errorMessage;
+                    resultTextP.classList.add('text-red-600', 'font-bold');
+                } finally {
+                    loadingSpinner.classList.add('hidden');
+                    resultContent.classList.remove('hidden');
+                }
+            }
+        });
+
+        // Helper function to read file as Base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    const dataUrl = reader.result;
+                    const base64Data = dataUrl.split(',')[1];
+                    const mimeType = dataUrl.split(';')[0].split(':')[1];
+                    if (!mimeType.startsWith('image/')) {
+                        reject(new Error('File is not an image.'));
+                        return;
+                    }
+                    resolve({ base64Data, mimeType });
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+
+        // --- Gemini API Call Function (FOR TEXT CHAT with Google Search) ---
+        async function callGeminiApi(query, locationContext, languageCode, retries = 3, delay = 1000) {
+            const currentApiKey = getApiKey();
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${currentApiKey}`;
+
+            const langInstruction = languageCode.toLowerCase().startsWith('en')
+                ? 'Respond in simple, standard English.'
+                : `CRITICAL: Respond ONLY and ENTIRELY in the language corresponding to the code: ${languageCode}.`;
+
+            const systemPrompt = `You are 'Farmer's Friend,' an AI assistant for farmers in rural areas, many of whom may not be highly educated. 
+            - Your answers MUST be very simple, short, and easy to understand.
+            - Use simple words. Avoid technical jargon.
+            - Start with a friendly greeting (e.g., "Okay," "Here is the info:").
+            - Use icons (emojis) to make the text more visual and friendly.
+            - Format answers with line breaks for readability. Use two line breaks (<br><br>) for paragraph separation.
+            - You must be able to answer questions about crop prices, weather, and government schemes by using the provided search tool.
+            - When asked for market prices, make sure to use the location provided by the farmer in the search query to give the most accurate, local information.
+            - ${langInstruction}`; 
+
+            let fullQuery = query;
+            if (locationContext) {
+                fullQuery = `${query}. IMPORTANT: Base your answer on the area of ${locationContext}.`;
+            }
+            
+            fullQuery = `${fullQuery} and ensure the response is in the language code: ${languageCode}.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: fullQuery }] }],
+                tools: [{ "google_search": {} }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        // Replace single newlines with <br> for HTML display
+                        const text = candidate.content.parts[0].text.replace(/\n/g, '<br>');
+                        
+                        let sources = [];
+                        const groundingMetadata = candidate.groundingMetadata;
+                        
+                        if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                            sources = groundingMetadata.groundingAttributions
+                                .map(attribution => ({ uri: attribution.web?.uri, title: attribution.web?.title }))
+                                .filter(source => source.uri && source.title);
+                        }
+                        
+                        return { text, sources };
+
+                    } else {
+                        throw new Error("Invalid response structure from API.");
+                    }
+                } catch (error) {
+                    if (i === retries - 1) { throw error; }
+                    await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                }
+            }
+            throw new Error("API call failed after all retries.");
+        }
+
+        // --- Gemini API Call Function (FOR VISION) ---
+        async function callGeminiVisionApi(base64Data, mimeType, languageCode, retries = 3, delay = 1000) {
+            const currentApiKey = getApiKey();
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${currentApiKey}`;
+
+            const langInstruction = languageCode.toLowerCase().startsWith('en')
+                ? 'Respond in simple, standard English.'
+                : `CRITICAL: Respond ONLY and ENTIRELY in the language corresponding to the code: ${languageCode}.`;
+
+            const systemPrompt = `You are 'Farmer's Friend,' an AI assistant for farmers in rural areas. 
+            - Your answers MUST be very simple, short, and easy to understand.
+            - Use simple words. Avoid technical jargon.
+            - Use icons (emojis) to make the text more visual and friendly.
+            - Format answers with line breaks for readability. Use two line breaks (<br><br>) for paragraph separation.
+            - ${langInstruction}`;
+            
+            const userPromptText = `Please analyze this image.
+1. Is this a photo of a crop plant (like vegetables, fruits, grains) or a part of one (leaf, stem)?
+2. If it is NOT a plant, please respond ONLY with: "❌ This photo does not look like a plant. Please upload a clear photo of your crop or leaf for analysis."
+3. If it IS a plant, please identify the plant (if possible), check if it has any visible disease or pests, and provide a simple, immediate, step-by-step solution a farmer can use. If it looks healthy, just say so.
+Also, ensure the full response text is in the language code: ${languageCode}.`;
+
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: userPromptText },
+                        {
+                            inlineData: { mimeType: mimeType, data: base64Data }
+                        }
+                    ]
+                }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Vision HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const text = candidate.content.parts[0].text.replace(/\n/g, '<br>');
+                        return { text };
+                    } else {
+                        if (result.promptFeedback && result.promptFeedback.blockReason) {
+                            console.warn(`Image blocked. Reason: ${result.promptFeedback.blockReason}`);
+                            return { text: "I cannot analyze this photo. Please upload a clear photo of a plant." };
+                        }
+                        throw new Error("Invalid vision response structure from API.");
+                    }
+                } catch (error) {
+                    if (i === retries - 1) { throw error; }
+                    await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                }
+            }
+            throw new Error("Vision API call failed after all retries.");
+        }
+
+    </script>
+</body>
+</html>
